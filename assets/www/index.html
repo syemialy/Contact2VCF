@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>FileWriter Example</title>
+
+<!--Stylesheets-->
+<link rel="stylesheet" href="./css/style.css"></link>
+<link rel="stylesheet" href="./css/jquery.mobile-1.0.1.css"></link>
+
+<!--  Scripts -->
+<script src="./scripts/jquery.js"></script>
+<script src="./scripts/jquery-mobile-1.0.1.min.js"></script>
+<script src="./scripts/cordova-1.5.0.js"></script>
+<script src="VCard.js"></script>
+<script src="trigodda-utilities.js"></script>
+
+<script type="text/javascript" charset="utf-8">
+
+// all public vairables
+var VCardsArray; // placeholder for all processed VCards
+var contactsDisplay; //reference to contact display element
+
+
+ $(function () {		
+		// upon PhoneGap loaded event we enable contorll
+    	document.addEventListener('deviceready', enableButtonControls, false);
+		
+    	document.addEventListener('menubutton', showAboutInfo, false);
+    	
+    	document.addEventListener('backbutton', backButtonHandler, false);
+    	
+    	contactsDisplay = $('#contacts_out');
+    	
+    	showAboutInfo();
+	});
+       
+    
+    function backButtonHandler() {
+    	//alert('Exiting Application');
+    	navigator.app.exitApp();
+    }
+        
+    function showAboutInfo() {
+    	contactsDisplay.prop('innerHTML','<div class="howto"> To <strong>read</strong> all your contacts, use "Read Contacts" menu item. When reading is complete,' + 
+    			'a pink circle will display a total number of contacts in your device. Contacts, for which phone number is assigned, will be displayed below.' +
+    			'<br/><br/>To <strong>create</strong> VCF file, use "Write VCF" menu item. A blue cirle will indicate number of contacts available for exporting.' +
+    			' A dialog will pop up making it possible to change file path for the generated VCF.' +
+    			' The generated VCF will have vCard data for each of your contacts. Use the generated VCF to import contacts to another device or service.' + 
+    			'VCF file can be sent as an attachment, for example, from your android phone to your ipad via email.<br/><br/>' +
+    			'<div class="versionTxt">For more info contact <a href="mailto:semelianov@gmail.com">developer</a></div></div>');
+    }
+  
+    // Enable all controlls when phonegap is fully loaded
+    function enableButtonControls() { 
+    	//alert('enabling all controlls');
+    }
+
+    //writes wcf to file
+    function writeVCF() {
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+    }
+
+    //handler for successful file system request event
+    function gotFS(fileSystem) {
+    	var filePath = prompt('VCF File Location','/mnt/sdcard/contacts_backup.vcf');
+        fileSystem.root.getFile(filePath, {create: true, exclusive: false}, gotFileEntry, fail);
+    }
+
+    //handler for successful getFile operation
+    function gotFileEntry(fileEntry) {
+        fileEntry.createWriter(gotFileWriter, fail);
+    }
+
+    //handler for successfull file writer obtain event
+    function gotFileWriter(writer) {
+        var vcardsText = '';
+        for ( var i = 0; i < VCardsArray.length; i++ ) { 
+        	vcardsText += VCardsArray[i].toVCard21();
+        }
+        writer.write(vcardsText);
+    }
+
+    //file operations error event handler
+    function fail(error) {
+        alert(error.code);
+    }
+
+    //read contact, stored on device
+    function readContacts() {    	
+    	 //contactsDisplay = $('#contacts_out');
+    	 contactsDisplay.prop('innerHTML','');
+    	 
+    	 /*var options = new ContactFindOptions();
+         options.filter=""; 
+         */
+         var fields = ["id", "displayName", "phoneNumbers", "emails"];
+         navigator.contacts.find(fields, onContactReadSuccess, onError, null);
+    }
+    
+ 	// onSuccess: Get a snapshot of the current contacts
+    //
+    function onContactReadSuccess(contacts) {
+    	VCardsArray = new Array();
+    	var cardsCount = 0;
+    	
+    	for (var i = 0; i < contacts.length; i++) { 
+    		var ct = contacts[i];
+    	    
+    		//if there is no name or no phone, we don't need the contact to be converted to VCF
+    		if (ct.displayName != null && ct.phoneNumbers.length > 0 ) {
+	    		VCardsArray[cardsCount] = new VCard(ct);
+	    		cardsCount ++;
+    		}
+    	}
+    	
+    	//setting bubble notification to total number of contacts matched our criteria (only phone numbers)
+    	$('#wrtBtn').attr('data-bubble',cardsCount);
+    	
+    	//setting bubble notification to total number of contacts in the device's database
+    	$('#readBtn').attr('data-bubble', contacts.length);
+    	    	
+    	//print contacts summary on the screen
+    	var outHTMLSummary = printVCardsSummary(VCardsArray);
+    	
+    	contactsDisplay.prop('innerHTML',outHTMLSummary);
+       
+ 	}
+    
+    //creates short list of all contacts
+    function printVCardsSummary(vcards) {
+    	var str = '';    	
+    	for (var i=0; i<vcards.length; i++) {
+    		str += (i+1) + '. ' + vcards[i].FN + ' ' + vcards[i].TEL + '<br/>';
+    	}
+    	return str;
+    }
+    
+    // onError: Failed to get the contacts    
+    function onError(contactError) {
+        alert('onError!');
+    }
+    
+    </script>
+
+</head>
+<body>
+	<div class="headTitle">
+		Contacts to VCF <small class="versionTxt">v.1.0.3</small>
+	</div>
+	<div class="wrapper">
+		<ul class="menu">
+			<li><a id="readBtn" href="#" class="pink"
+				onclick="readContacts(); return false;" data-bubble="">Read
+					Contacts</a></li>
+			<li><a id="wrtBtn" href="#" class="blue"
+				onclick="writeVCF(); return false;" data-bubble="">Write VCF</a></li>
+			<li><a href="#" onclick="showAboutInfo(); return false;">How-To</a></li>
+		</ul>
+	</div>
+	<div id="contacts_out" class="contactsDisplay"></div>
+</body>
+</html>
+
