@@ -19,20 +19,30 @@ function VCard(contact) {
 	function toVCard21() {
 		var cardTemplate = "BEGIN:VCARD\n"+
 		"VERSION:2.1\n"+
-		"N:" + this.N + "\n"+
-		"FN:" + this.FN + "\n"+
+		"N:" + this.N.toString() + "\n"+
+		"FN:" + this.FN.toString() + "\n";
 		/*"ORG:Bubba Gump Shrimp Co.\n"+
 	    	//"TITLE:Shrimp Man\n"+
 	    	/"TEL;WORK;VOICE:(111) 555-1212\n"+
 		 */
-		"TEL;HOME;VOICE:" + this.TEL + "\n"+
+		for ( var i=0; i < this.TEL.length; i++) {
+			if (i == 0 ) cardTemplate += "TEL;CELL;VOICE:" + this.TEL[i].value + "\n";
+			else if ( i == 1) cardTemplate += "TEL;HOME;VOICE:" + this.TEL[i].value + "\n";
+			else if ( i == 2) cardTemplate += "TEL;WORK;VOICE:" + this.TEL[i].value + "\n";
+			else cardTemplate += "TEL;OTHER;VOICE:" + this.TEL[i].value + "\n";
+		}
+		 
 		/*"ADR;WORK:;;100 Waters Edge;Baytown;LA;30314;United States of America\n"+
 	    	//"LABEL;WORK;ENCODING=QUOTED-PRINTABLE:100 Waters Edge=0D=0ABaytown, LA 30314=0D=0AUnited States of America\n"+
 	    	//"ADR;HOME:;;42 Plantation St.;Baytown;LA;30314;United States of America\n"+
 	    	//"LABEL;HOME;ENCODING=QUOTED-PRINTABLE:42 Plantation St.=0D=0ABaytown, LA 30314=0D=0AUnited States of America\n"+
-		 */
-		"EMAIL;PREF;INTERNET:" + (this.EMAIL ? this.EMAIL : '') + "\n"+
-		"REV:" + this.REV + "\n"+
+		*/ 
+		for ( var j = 0; j < this.EMAIL.length; j++) {
+			if ( j == 0 ) cardTemplate += "EMAIL;PREF;INTERNET:" + this.EMAIL[j].value + "\n"; 
+			else cardTemplate += "EMAIL;OTHER;INTERNET:" + this.EMAIL[j].value + "\n";
+		}
+		
+		cardTemplate += "REV:" + this.REV + "\n"+
 		"END:VCARD\n";
 
 		return cardTemplate;
@@ -42,13 +52,14 @@ function VCard(contact) {
 
 	this.UID = contact.id;
 
-	if ( contact.phoneNumbers != null && contact.phoneNumbers.length == 1 )
-		this.TEL = phoneFormatter( contact.phoneNumbers[0].value ); //format phone number
+	if ( contact.phoneNumbers != null )
+		//this.TEL = phoneFormatter( contact.phoneNumbers[0].value ); //format phone number
+		this.TEL = contact.phoneNumbers; 
 
 	if ( contact.emails != null)
-		this.EMAIL = contact.emails.length;
+		this.EMAIL = contact.emails;
 		
-	this.FN = contact.displayName;
+	this.FN = contact.displayName.replace(/\"/g, '');
 	this.N = this.FN.replace(/\s/g,";") ;
 
 	//some javascript date manipulations

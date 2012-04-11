@@ -133,7 +133,7 @@ var contactsDisplay; //reference to contact display element
     function printVCardsSummary(vcards) {
     	var str = '';    	
     	for (var i=0; i<vcards.length; i++) {
-    		str += (i+1) + '. ' + vcards[i].FN + ' ' + vcards[i].TEL + '<br/>';
+    		str += (i+1) + '. ' + vcards[i].FN + ' ' + vcards[i].TEL[0].value + '<br/>';
     	}
     	return str;
     }
@@ -148,7 +148,7 @@ var contactsDisplay; //reference to contact display element
 </head>
 <body>
 	<div class="headTitle">
-		Contacts to VCF <small class="versionTxt">v.1.0.3</small>
+		Contacts to VCF <small class="versionTxt">v.1.0.4</small>
 	</div>
 	<div class="wrapper">
 		<ul class="menu">
